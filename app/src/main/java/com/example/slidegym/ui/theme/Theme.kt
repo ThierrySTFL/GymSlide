@@ -1,9 +1,12 @@
+// Theme.kt
 package com.example.slidegym.ui.theme
 
 import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Shapes
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -14,76 +17,64 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 
-// Definindo as cores personalizadas
-private val Black = Color(0xFF000000)
-private val White = Color(0xFFFFFFFF)
-private val DarkGray = Color(0xFF121212)
-private val MediumGray = Color(0xFF242424)
-private val LightGray = Color(0xFF363636)
-private val AccentRed = Color(0xFFE53935)
-private val AccentGreen = Color(0xFF43A047)
+// Cores inspiradas no Discord
+private val DiscordBackground = Color(0xFF36393F)
+private val DiscordSurface = Color(0xFF2F3136)
+private val DiscordPrimary = Color(0xFF5865F2)
+private val DiscordSecondary = Color(0xFF3BA55C)
+private val DiscordError = Color(0xFFED4245)
+private val DiscordText = Color(0xFFDCDDDE)
+private val DiscordTextSecondary = Color(0xFF96989D)
+private val DiscordDivider = Color(0xFF40444B)
+private val DiscordHover = Color(0xFF32353B)
+private val DiscordCard = Color(0xFF2F3136)
 
 private val DarkColorScheme = darkColorScheme(
-    primary = AccentRed,
-    secondary = AccentGreen,
-    tertiary = White,
-    background = DarkGray,
-    surface = MediumGray,
-    onPrimary = White,
-    onSecondary = Black,
-    onTertiary = Black,
-    onBackground = White,
-    onSurface = White,
-    primaryContainer = MediumGray,
-    secondaryContainer = AccentGreen.copy(alpha = 0.2f),
-    surfaceVariant = LightGray
+    primary = DiscordPrimary,
+    secondary = DiscordSecondary,
+    background = DiscordBackground,
+    surface = DiscordSurface,
+    error = DiscordError,
+    onPrimary = Color.White,
+    onSecondary = Color.White,
+    onBackground = DiscordText,
+    onSurface = DiscordText,
+    primaryContainer = DiscordHover,
+    secondaryContainer = DiscordSecondary.copy(alpha = 0.2f),
+    surfaceVariant = DiscordCard
 )
 
-private val LightColorScheme = lightColorScheme(
-    primary = AccentRed,
-    secondary = AccentGreen,
-    tertiary = DarkGray,
-    background = White,
-    surface = Color(0xFFF5F5F5),
-    onPrimary = White,
-    onSecondary = White,
-    onTertiary = White,
-    onBackground = Black,
-    onSurface = Black,
-    primaryContainer = Color(0xFFFFECEB),
-    secondaryContainer = AccentGreen.copy(alpha = 0.1f),
-    surfaceVariant = Color(0xFFE1E1E1)
+val Shapes = Shapes(
+    extraSmall = RoundedCornerShape(4.dp),
+    small = RoundedCornerShape(8.dp),
+    medium = RoundedCornerShape(12.dp),
+    large = RoundedCornerShape(16.dp),
+    extraLarge = RoundedCornerShape(24.dp)
 )
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = false,
+    darkTheme: Boolean = true, // Forçando tema escuro como padrão
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = DarkColorScheme // Sempre usando o tema escuro
+
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
-            window.statusBarColor = colorScheme.primary.toArgb()
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            window.statusBarColor = colorScheme.background.toArgb()
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = false
         }
     }
 
     MaterialTheme(
         colorScheme = colorScheme,
         typography = Typography,
+        shapes = Shapes,
         content = content
     )
 }
-

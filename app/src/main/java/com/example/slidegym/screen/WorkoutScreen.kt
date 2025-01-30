@@ -1,16 +1,21 @@
-package com.example.slidegym.screen
+package com.example.slidegym.ui.screen
 
+import androidx.compose.animation.animateContentSize
+import com.example.slidegym.data.model.WeekDay
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.slidegym.data.model.Exercise
-import com.example.slidegym.data.model.WeekDay
 import com.example.slidegym.viewmodel.WorkoutViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -20,11 +25,12 @@ fun WorkoutScreen(viewModel: WorkoutViewModel) {
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Treino") },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+            CenterAlignedTopAppBar(
+                title = {
+                    Text("Treino")
+                },
+                colors = TopAppBarDefaults.centerAlignedTopAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
                 )
             )
         },
@@ -45,17 +51,25 @@ fun WorkoutScreen(viewModel: WorkoutViewModel) {
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // Tabs para os dias da semana
+            // Tabs dos dias
             ScrollableTabRow(
                 selectedTabIndex = uiState.selectedDay.ordinal,
-                containerColor = MaterialTheme.colorScheme.primaryContainer,
-                contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                containerColor = MaterialTheme.colorScheme.surface,
+                edgePadding = 16.dp
             ) {
                 WeekDay.values().forEach { day ->
                     Tab(
                         selected = uiState.selectedDay == day,
                         onClick = { viewModel.onDaySelected(day) },
-                        text = { Text(day.name) }
+                        text = {
+                            Text(
+                                day.name,
+                                color = if (uiState.selectedDay == day)
+                                    MaterialTheme.colorScheme.primary
+                                else
+                                    MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
+                            )
+                        }
                     )
                 }
             }
@@ -83,7 +97,6 @@ fun WorkoutScreen(viewModel: WorkoutViewModel) {
         }
     }
 
-    // Diálogo de adicionar/editar exercício
     if (uiState.isAddDialogVisible) {
         ExerciseDialog(
             exercise = uiState.editingExercise,
@@ -117,7 +130,9 @@ fun ExerciseCard(
 
     Card(
         onClick = { onToggleCompletion(exercise) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .animateContentSize(),
         colors = CardDefaults.cardColors(
             containerColor = if (exercise.isCompleted)
                 MaterialTheme.colorScheme.secondaryContainer
@@ -129,9 +144,12 @@ fun ExerciseCard(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Column {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
                     text = exercise.name,
                     style = MaterialTheme.typography.titleMedium
@@ -145,7 +163,10 @@ fun ExerciseCard(
 
             Box {
                 IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, "Mais opções")
+                    Icon(
+                        Icons.Default.MoreVert,
+                        contentDescription = "Mais opções"
+                    )
                 }
 
                 DropdownMenu(
@@ -172,6 +193,7 @@ fun ExerciseCard(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseDialog(
     exercise: Exercise?,
@@ -203,6 +225,7 @@ fun ExerciseDialog(
                     value = weight,
                     onValueChange = { weight = it },
                     label = { Text("Peso (kg)") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -210,6 +233,7 @@ fun ExerciseDialog(
                     value = reps,
                     onValueChange = { reps = it },
                     label = { Text("Repetições") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     modifier = Modifier.fillMaxWidth()
                 )
             }
@@ -221,6 +245,7 @@ fun ExerciseDialog(
                     val repsInt = reps.toIntOrNull() ?: 0
                     if (name.isNotBlank() && weightDouble > 0 && repsInt > 0) {
                         onSave(name, weightDouble, repsInt)
+                        onDismiss()
                     }
                 }
             ) {
