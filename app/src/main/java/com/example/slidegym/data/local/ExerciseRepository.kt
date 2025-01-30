@@ -55,6 +55,7 @@ class ExerciseRepository(context: Context) {
         exercises
     }
 
+    // ExerciseRepository.kt
     suspend fun updateExercise(exercise: Exercise): Int = withContext(Dispatchers.IO) {
         val db = dbHelper.writableDatabase
 

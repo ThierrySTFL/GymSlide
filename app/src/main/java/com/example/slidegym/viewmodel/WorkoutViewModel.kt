@@ -83,8 +83,9 @@ class WorkoutViewModel(application: Application) : AndroidViewModel(application)
 
     fun toggleExerciseCompletion(exercise: Exercise) {
         viewModelScope.launch {
-            val updatedExercise = exercise.copy(isCompleted = !exercise.isCompleted)
-            repository.updateExercise(updatedExercise)
+            // Atualiza no banco de dados
+            repository.updateExercise(exercise)
+            // Recarrega os exercícios para forçar a atualização da UI
             loadAllExercises()
         }
     }

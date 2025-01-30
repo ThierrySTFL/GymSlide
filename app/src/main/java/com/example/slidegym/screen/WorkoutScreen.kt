@@ -17,6 +17,15 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.slidegym.data.model.Exercise
 import com.example.slidegym.viewmodel.WorkoutViewModel
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
+import kotlinx.coroutines.launch
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -127,22 +136,59 @@ fun ExerciseCard(
     onDelete: (Exercise) -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val offset = remember { Animatable(0f) }
+    val swipeThreshold = 150f
+    val coroutineScope = rememberCoroutineScope()
+
+    // Log para debug
+    LaunchedEffect(exercise.isCompleted) {
+        println("Estado do exercício alterado: ${exercise.name} - Completo: ${exercise.isCompleted}")
+    }
+
+    val backgroundColor = if (exercise.isCompleted) {
+        Color(0xFF4CAF50)
+    } else {
+        MaterialTheme.colorScheme.surface
+    }
 
     Card(
-        onClick = { onToggleCompletion(exercise) },
         modifier = Modifier
             .fillMaxWidth()
-            .animateContentSize(),
-        colors = CardDefaults.cardColors(
-            containerColor = if (exercise.isCompleted)
-                MaterialTheme.colorScheme.secondaryContainer
-            else
-                MaterialTheme.colorScheme.surfaceVariant
-        )
+            .offset { IntOffset(offset.value.roundToInt(), 0) }
+            .pointerInput(Unit) {
+                detectDragGestures(
+                    onDragEnd = {
+                        coroutineScope.launch {
+                            if (abs(offset.value) > swipeThreshold) {
+                                val shouldComplete = offset.value > 0
+                                println("Swipe detectado: direção=${if(shouldComplete) "direita" else "esquerda"}")
+
+                                // Cria um novo objeto Exercise com o estado atualizado
+                                val updatedExercise = exercise.copy(isCompleted = shouldComplete)
+                                onToggleCompletion(updatedExercise)
+                            }
+                            offset.animateTo(
+                                targetValue = 0f,
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    easing = FastOutSlowInEasing
+                                )
+                            )
+                        }
+                    },
+                    onDrag = { change, dragAmount ->
+                        change.consume()
+                        coroutineScope.launch {
+                            offset.snapTo(offset.value + dragAmount.x)
+                        }
+                    }
+                )
+            }
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
+                .background(backgroundColor)
                 .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
@@ -152,12 +198,14 @@ fun ExerciseCard(
             ) {
                 Text(
                     text = exercise.name,
-                    style = MaterialTheme.typography.titleMedium
+                    style = MaterialTheme.typography.titleMedium,
+                    color = if (exercise.isCompleted) Color.White else MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "${exercise.weight}kg - ${exercise.reps} reps",
-                    style = MaterialTheme.typography.bodyMedium
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (exercise.isCompleted) Color.White else MaterialTheme.colorScheme.onSurface
                 )
             }
 
@@ -165,7 +213,8 @@ fun ExerciseCard(
                 IconButton(onClick = { showMenu = true }) {
                     Icon(
                         Icons.Default.MoreVert,
-                        contentDescription = "Mais opções"
+                        contentDescription = "Mais opções",
+                        tint = if (exercise.isCompleted) Color.White else MaterialTheme.colorScheme.onSurface
                     )
                 }
 
